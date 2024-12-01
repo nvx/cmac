@@ -1,4 +1,4 @@
-[![Godoc Reference](https://godoc.org/github.com/aead/cmac?status.svg)](https://godoc.org/github.com/aead/cmac)
+[![Godoc Reference](https://godoc.org/github.com/nvx/cmac?status.svg)](https://godoc.org/github.com/nvx/cmac)
 
 ## The CMAC/OMAC1 message authentication code
 
@@ -8,5 +8,7 @@ CMAC is only specified with the AES.
 
 This implementation supports block ciphers with a block size of 64, 128, 256, 512 or 1024 bit.
 
+Forked from [aead/cmac](https://github.com/aead/cmac)
+
 ### Installation
-Install in your GOPATH: `go get -u github.com/aead/cmac`  
+Install in your GOPATH: `go get -u github.com/nvx/cmac`  
