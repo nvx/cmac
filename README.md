@@ -1,4 +1,4 @@
-[![Godoc Reference](https://godoc.org/github.com/nvx/cmac?status.svg)](https://godoc.org/github.com/nvx/cmac)
+[![Go Reference](https://pkg.go.dev/badge/github.com/nvx/cmac.svg)](https://pkg.go.dev/github.com/nvx/cmac)
 
 ## The CMAC/OMAC1 message authentication code
 
