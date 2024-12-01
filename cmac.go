@@ -8,17 +8,18 @@
 // fixed-length messages). CMAC is equal to OMAC1.
 // This implementations supports block ciphers with a
 // block size of:
-//	-   64 bit
-//	-  128 bit
-//	-  256 bit
-//	-  512 bit
-//	- 1024 bit
+//   - 64 bit
+//   - 128 bit
+//   - 256 bit
+//   - 512 bit
+//   - 1024 bit
+//
 // Common ciphers like AES, Serpent etc. operate on 128 bit
 // blocks. 256, 512 and 1024 are supported for the Threefish
 // tweakable block cipher. Ciphers with 64 bit blocks are
-// supported, but not recommened.
+// supported, but not recommended.
 // CMAC (with AES) is specified in RFC 4493 and RFC 4494.
-package cmac // import "github.com/aead/cmac"
+package cmac // import "github.com/nvx/cmac"
 
 import (
 	"crypto/cipher"
@@ -29,7 +30,7 @@ import (
 
 const (
 	// minimal irreducible polynomial for blocksize
-	p64   = 0x1b    // for 64  bit block ciphers
+	p64   = 0x1B    // for 64  bit block ciphers
 	p128  = 0x87    // for 128 bit block ciphers (like AES)
 	p256  = 0x425   // special for large block ciphers (Threefish)
 	p512  = 0x125   // special for large block ciphers (Threefish)
@@ -41,9 +42,9 @@ var (
 	errInvalidTagSize    = errors.New("tags size must between 1 and the cipher's block size")
 )
 
-// Sum computes the CMAC checksum with the given tagsize of msg using the cipher.Block.
-func Sum(msg []byte, c cipher.Block, tagsize int) ([]byte, error) {
-	h, err := NewWithTagSize(c, tagsize)
+// Sum computes the CMAC checksum with the given tagSize of msg using the cipher.Block.
+func Sum(msg []byte, c cipher.Block, tagSize int) ([]byte, error) {
+	h, err := NewWithTagSize(c, tagSize)
 	if err != nil {
 		return nil, err
 	}
@@ -51,11 +52,11 @@ func Sum(msg []byte, c cipher.Block, tagsize int) ([]byte, error) {
 	return h.Sum(nil), nil
 }
 
-// Verify computes the CMAC checksum with the given tagsize of msg and compares
+// Verify computes the CMAC checksum with the given tagSize of msg and compares
 // it with the given mac. This functions returns true if and only if the given mac
 // is equal to the computed one.
-func Verify(mac, msg []byte, c cipher.Block, tagsize int) bool {
-	sum, err := Sum(msg, c, tagsize)
+func Verify(mac, msg []byte, c cipher.Block, tagSize int) bool {
+	sum, err := Sum(msg, c, tagSize)
 	if err != nil {
 		return false
 	}
@@ -69,15 +70,15 @@ func New(c cipher.Block) (hash.Hash, error) {
 
 // NewWithTagSize returns a hash.Hash computing the CMAC checksum with the
 // given tag size. The tag size must between the 1 and the cipher's block size.
-func NewWithTagSize(c cipher.Block, tagsize int) (hash.Hash, error) {
-	blocksize := c.BlockSize()
+func NewWithTagSize(c cipher.Block, tagSize int) (hash.Hash, error) {
+	blockSize := c.BlockSize()
 
-	if tagsize <= 0 || tagsize > blocksize {
+	if tagSize <= 0 || tagSize > blockSize {
 		return nil, errInvalidTagSize
 	}
 
 	var p int
-	switch blocksize {
+	switch blockSize {
 	default:
 		return nil, errUnsupportedCipher
 	case 8:
@@ -94,18 +95,18 @@ func NewWithTagSize(c cipher.Block, tagsize int) (hash.Hash, error) {
 
 	m := &macFunc{
 		cipher: c,
-		k0:     make([]byte, blocksize),
-		k1:     make([]byte, blocksize),
-		buf:    make([]byte, blocksize),
+		k0:     make([]byte, blockSize),
+		k1:     make([]byte, blockSize),
+		buf:    make([]byte, blockSize),
 	}
-	m.tagsize = tagsize
+	m.tagSize = tagSize
 	c.Encrypt(m.k0, m.k0)
 
 	v := shift(m.k0, m.k0)
-	m.k0[blocksize-1] ^= byte(subtle.ConstantTimeSelect(v, p, 0))
+	m.k0[blockSize-1] ^= byte(subtle.ConstantTimeSelect(v, p, 0))
 
 	v = shift(m.k1, m.k0)
-	m.k1[blocksize-1] ^= byte(subtle.ConstantTimeSelect(v, p, 0))
+	m.k1[blockSize-1] ^= byte(subtle.ConstantTimeSelect(v, p, 0))
 
 	return m, nil
 }
@@ -116,10 +117,10 @@ type macFunc struct {
 	k0, k1  []byte
 	buf     []byte
 	off     int
-	tagsize int
+	tagSize int
 }
 
-func (h *macFunc) Size() int { return h.cipher.BlockSize() }
+func (h *macFunc) Size() int { return h.tagSize }
 
 func (h *macFunc) BlockSize() int { return h.cipher.BlockSize() }
 
@@ -137,12 +138,12 @@ func (h *macFunc) Write(msg []byte) (int, error) {
 	if h.off > 0 {
 		dif := bs - h.off
 		if n > dif {
-			xor(h.buf[h.off:], msg[:dif])
+			subtle.XORBytes(h.buf[h.off:], h.buf[h.off:], msg[:dif])
 			msg = msg[dif:]
 			h.cipher.Encrypt(h.buf, h.buf)
 			h.off = 0
 		} else {
-			xor(h.buf[h.off:], msg)
+			subtle.XORBytes(h.buf[h.off:], h.buf[h.off:], msg)
 			h.off += n
 			return n, nil
 		}
@@ -154,14 +155,14 @@ func (h *macFunc) Write(msg []byte) (int, error) {
 			nn -= bs
 		}
 		for i := 0; i < nn; i += bs {
-			xor(h.buf, msg[i:i+bs])
+			subtle.XORBytes(h.buf, h.buf, msg[i:i+bs])
 			h.cipher.Encrypt(h.buf, h.buf)
 		}
 		msg = msg[nn:]
 	}
 
 	if length := len(msg); length > 0 {
-		xor(h.buf[h.off:], msg)
+		subtle.XORBytes(h.buf[h.off:], h.buf[h.off:], msg)
 		h.off += length
 	}
 
@@ -173,21 +174,21 @@ func (h *macFunc) Sum(b []byte) []byte {
 
 	// Don't change the buffer so the
 	// caller can keep writing and suming.
-	hash := make([]byte, blocksize)
+	hashOut := make([]byte, blocksize)
 
 	if h.off < blocksize {
-		copy(hash, h.k1)
+		copy(hashOut, h.k1)
 	} else {
-		copy(hash, h.k0)
+		copy(hashOut, h.k0)
 	}
 
-	xor(hash, h.buf)
+	subtle.XORBytes(hashOut, hashOut, h.buf)
 	if h.off < blocksize {
-		hash[h.off] ^= 0x80
+		hashOut[h.off] ^= 0x80
 	}
 
-	h.cipher.Encrypt(hash, hash)
-	return append(b, hash[:h.tagsize]...)
+	h.cipher.Encrypt(hashOut, hashOut)
+	return append(b, hashOut[:h.tagSize]...)
 }
 
 func shift(dst, src []byte) int {

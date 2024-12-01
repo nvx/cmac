@@ -22,6 +22,8 @@ func (c dummyCipher) Encrypt(dst, src []byte) { copy(dst, src) }
 func (c dummyCipher) Decrypt(dst, src []byte) { copy(dst, src) }
 
 func TestNew(t *testing.T) {
+	t.Parallel()
+
 	var ciphers = [5]dummyCipher{8, 16, 32, 64, 128}
 	for _, c := range ciphers {
 		_, err := New(c)
@@ -37,6 +39,8 @@ func TestNew(t *testing.T) {
 }
 
 func TestNewWithTagSize(t *testing.T) {
+	t.Parallel()
+
 	_, err := NewWithTagSize(dummyCipher(16), 0)
 	if err == nil {
 		t.Fatalf("NewWithTagSize allowed tag size: %d", 0)
@@ -48,6 +52,8 @@ func TestNewWithTagSize(t *testing.T) {
 }
 
 func TestBlockSize(t *testing.T) {
+	t.Parallel()
+
 	c, err := aes.NewCipher(make([]byte, 16))
 	if err != nil {
 		t.Fatalf("Could not create AES instance: %s", err)
@@ -62,6 +68,8 @@ func TestBlockSize(t *testing.T) {
 }
 
 func TestSize(t *testing.T) {
+	t.Parallel()
+
 	c, err := aes.NewCipher(make([]byte, 16))
 	if err != nil {
 		t.Fatalf("Could not create AES instance: %s", err)
@@ -76,6 +84,8 @@ func TestSize(t *testing.T) {
 }
 
 func TestReset(t *testing.T) {
+	t.Parallel()
+
 	cipher, err := aes.NewCipher(make([]byte, 16))
 	if err != nil {
 		t.Fatalf("Could not create AES instance: %s", err)
@@ -90,7 +100,7 @@ func TestReset(t *testing.T) {
 	}
 	orig := *c // copy
 
-	c.Write(make([]byte, c.BlockSize()+1))
+	_, _ = c.Write(make([]byte, c.BlockSize()+1))
 	c.Reset()
 
 	if !bytes.Equal(c.buf, orig.buf) {
@@ -111,6 +121,8 @@ func TestReset(t *testing.T) {
 }
 
 func TestWrite(t *testing.T) {
+	t.Parallel()
+
 	c, err := aes.NewCipher(make([]byte, 16))
 	if err != nil {
 		t.Fatalf("Could not create AES instance: %s", err)
@@ -139,6 +151,8 @@ func TestWrite(t *testing.T) {
 }
 
 func TestSum(t *testing.T) {
+	t.Parallel()
+
 	c, err := aes.NewCipher(make([]byte, 16))
 	if err != nil {
 		t.Fatalf("Could not create AES instance: %s", err)
@@ -171,6 +185,8 @@ func TestSum(t *testing.T) {
 }
 
 func TestVerify(t *testing.T) {
+	t.Parallel()
+
 	var mac [16]byte
 	mac[0] = 128
 
@@ -194,6 +210,8 @@ func BenchmarkSum_1K(b *testing.B) { benchmarkSum(b, 1024) }
 func BenchmarkSum_64K(b *testing.B) { benchmarkSum(b, 64*1024) }
 
 func benchmarkWrite(b *testing.B, nBytes int) {
+	b.Helper()
+
 	c, err := aes.NewCipher(make([]byte, 16))
 	if err != nil {
 		b.Fatalf("Failed to create AES instance: %s", err)
@@ -211,6 +229,8 @@ func benchmarkWrite(b *testing.B, nBytes int) {
 }
 
 func benchmarkSum(b *testing.B, nBytes int) {
+	b.Helper()
+
 	c, err := aes.NewCipher(make([]byte, 16))
 	if err != nil {
 		b.Fatalf("Failed to create AES instance: %s", err)
@@ -219,6 +239,6 @@ func benchmarkSum(b *testing.B, nBytes int) {
 	buf := make([]byte, nBytes)
 	b.SetBytes(int64(nBytes))
 	for i := 0; i < b.N; i++ {
-		Sum(buf, c, c.BlockSize())
+		_, _ = Sum(buf, c, c.BlockSize())
 	}
 }

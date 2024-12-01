@@ -99,6 +99,8 @@ var testVectors = []struct {
 }
 
 func TestVectors(t *testing.T) {
+	t.Parallel()
+
 	for i, v := range testVectors {
 		key := fromHex(v.key)
 		msg := fromHex(v.msg)
@@ -124,6 +126,5 @@ func TestVectors(t *testing.T) {
 		if !Verify(hash, msg, c, v.tagsize) {
 			t.Fatalf("Test vector %d: verification of MAC failed", i)
 		}
-
 	}
 }
