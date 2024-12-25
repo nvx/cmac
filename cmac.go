@@ -131,6 +131,14 @@ func (h *macFunc) Reset() {
 	h.off = 0
 }
 
+func (h *macFunc) SetIV(iv []byte) {
+	if len(iv) != len(h.buf) {
+		panic("cmac: incorrect length IV")
+	}
+	copy(h.buf, iv)
+	h.off = 0
+}
+
 func (h *macFunc) Write(msg []byte) (int, error) {
 	bs := h.BlockSize()
 	n := len(msg)
