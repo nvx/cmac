@@ -178,20 +178,30 @@ func (h *macFunc) Write(msg []byte) (int, error) {
 }
 
 func (h *macFunc) Sum(b []byte) []byte {
-	blocksize := h.cipher.BlockSize()
+	var k []byte
+	if h.off < h.cipher.BlockSize() {
+		k = h.k1
+	} else {
+		k = h.k0
+	}
+	return h.sum(b, k)
+}
+
+func (h *macFunc) SumManuallyPadded(b []byte) []byte {
+	return h.sum(b, h.k1)
+}
+
+func (h *macFunc) sum(b, k []byte) []byte {
+	blockSize := h.cipher.BlockSize()
 
 	// Don't change the buffer so the
 	// caller can keep writing and suming.
-	hashOut := make([]byte, blocksize)
+	hashOut := make([]byte, blockSize)
 
-	if h.off < blocksize {
-		copy(hashOut, h.k1)
-	} else {
-		copy(hashOut, h.k0)
-	}
+	copy(hashOut, k)
 
 	subtle.XORBytes(hashOut, hashOut, h.buf)
-	if h.off < blocksize {
+	if h.off < blockSize {
 		hashOut[h.off] ^= 0x80
 	}
 
